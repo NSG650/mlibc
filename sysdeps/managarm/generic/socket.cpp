@@ -161,6 +161,8 @@ int sys_connect(int fd, const struct sockaddr *addr_ptr, socklen_t addr_length) 
 		return ENOENT;
 	} else if(resp.error() == managarm::fs::Errors::ILLEGAL_ARGUMENT) {
 		return EINVAL;
+	} else if(resp.error() == managarm::fs::Errors::CONNECTION_REFUSED) {
+		return ECONNREFUSED;
 	}
 
 	__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
@@ -335,11 +337,12 @@ std::array<std::pair<int, int>, 5> setsockopt_readonly = {{
 	{ SOL_SOCKET, SO_TYPE },
 }};
 
-std::array<std::pair<int, int>, 4> setsockopt_passthrough = {{
+std::array<std::pair<int, int>, 5> setsockopt_passthrough = {{
 	{ SOL_PACKET, PACKET_AUXDATA },
 	{ SOL_SOCKET, SO_LOCK_FILTER },
 	{ SOL_SOCKET, SO_BINDTODEVICE },
 	{ SOL_IP, IP_PKTINFO },
+	{ SOL_NETLINK, NETLINK_ADD_MEMBERSHIP },
 }};
 
 std::array<std::pair<int, int>, 2> setsockopt_passthrough_noopt = {{
@@ -523,14 +526,14 @@ int sys_setsockopt(int fd, int layer, int number,
 	}else if(layer == IPPROTO_TCP && number == TCP_KEEPCNT) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with IPPROTO_TCP and TCP_KEEPCNT is unimplemented\e[39m" << frg::endlog;
 		return 0;
-	}else if(layer == SOL_NETLINK && number == NETLINK_ADD_MEMBERSHIP) {
-		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_NETLINK and NETLINK_ADD_MEMBERSHIP is unimplemented\e[39m" << frg::endlog;
-		return 0;
 	}else if(layer == SOL_SOCKET && number == SO_SNDTIMEO) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_SNDTIMEO is unimplemented\e[39m" << frg::endlog;
 		return 0;
 	}else if(layer == SOL_SOCKET && number == SO_OOBINLINE) {
 		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_OOBINLINE is unimplemented\e[39m" << frg::endlog;
+		return 0;
+	}else if(layer == SOL_SOCKET && number == SO_PRIORITY) {
+		mlibc::infoLogger() << "\e[31mmlibc: setsockopt() call with SOL_SOCKET and SO_PRIORITY is unimplemented\e[39m" << frg::endlog;
 		return 0;
 	}else{
 		mlibc::panicLogger() << "\e[31mmlibc: Unexpected setsockopt() call, layer: " << layer << " number: " << number << "\e[39m" << frg::endlog;

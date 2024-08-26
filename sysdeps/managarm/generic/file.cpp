@@ -852,7 +852,7 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 		return EBADF;
 
 	size_t overall_size = 0;
-	for(int i = 0; i < hdr->msg_iovlen; i++) {
+	for(size_t i = 0; i < hdr->msg_iovlen; i++) {
 		HelSgItem item{
 			.buffer = hdr->msg_iov[i].iov_base,
 			.length = hdr->msg_iov[i].iov_len,
@@ -939,6 +939,8 @@ int sys_msg_send(int sockfd, const struct msghdr *hdr, int flags, ssize_t *lengt
 		return EAFNOSUPPORT;
 	}else if(resp.error() == managarm::fs::Errors::MESSAGE_TOO_LARGE) {
 		return EMSGSIZE;
+	}else if(resp.error() == managarm::fs::Errors::ILLEGAL_OPERATION_TARGET) {
+		return EOPNOTSUPP;
 	}else{
 		__ensure(resp.error() == managarm::fs::Errors::SUCCESS);
 		*length = resp.size();
@@ -2221,6 +2223,14 @@ int sys_unlinkat(int fd, const char *path, int flags) {
 		return EBUSY;
 	}else if(resp.error() == managarm::posix::Errors::IS_DIRECTORY) {
 		return EISDIR;
+	}else if(resp.error() == managarm::posix::Errors::ILLEGAL_ARGUMENTS) {
+		return EINVAL;
+	}else if(resp.error() == managarm::posix::Errors::BAD_FD) {
+		return EBADF;
+	}else if(resp.error() == managarm::posix::Errors::NOT_A_DIRECTORY) {
+		return ENOTDIR;
+	}else if(resp.error() == managarm::posix::Errors::DIRECTORY_NOT_EMPTY) {
+		return ENOTEMPTY;
 	}else{
 		__ensure(resp.error() == managarm::posix::Errors::SUCCESS);
 		return 0;
